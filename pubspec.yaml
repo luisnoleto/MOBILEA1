@@ -1,0 +1,53 @@
+name: flutter_pdm_app
+description: Aplicativo Flutter para PDM II com biometria, notificações e mapas
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Autenticação Biométrica
+  local_auth: ^2.1.6
+  local_auth_android: ^1.0.34
+  local_auth_ios: ^1.1.4
+
+  # Firebase e Push Notifications
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  flutter_local_notifications: ^17.2.3
+
+  # Google Maps e Geolocalização
+  google_maps_flutter: ^2.5.0
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+
+  # HTTP para API calls
+  http: ^1.1.2
+
+  # Gerenciamento de estado e navegação
+  provider: ^6.1.1
+  go_router: ^12.1.3
+
+  # Utilitários
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.2.0
+
+  # UI
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
