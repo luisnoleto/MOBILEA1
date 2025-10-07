@@ -23,17 +23,30 @@ class AuthService extends ChangeNotifier {
   Future<void> _initializeBiometrics() async {
     try {
       // Verifica se o dispositivo suporta biometria
-      _isBiometricAvailable = await _localAuth.canCheckBiometrics;
+      final bool isDeviceSupported = await _localAuth.isDeviceSupported();
+      final bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      
+      _isBiometricAvailable = isDeviceSupported && canCheckBiometrics;
       
       if (_isBiometricAvailable) {
         // Obtém os tipos de biometria disponíveis
         _availableBiometrics = await _localAuth.getAvailableBiometrics();
+        print('Biometria disponível: $_availableBiometrics');
+        
+        // Se não há biometrias cadastradas, marca como não disponível
+        if (_availableBiometrics.isEmpty) {
+          _isBiometricAvailable = false;
+          print('Nenhuma biometria cadastrada no dispositivo');
+        }
+      } else {
+        print('Dispositivo não suporta biometria ou não pode verificar');
       }
       
       notifyListeners();
     } catch (e) {
       print('Erro ao inicializar biometria: $e');
       _isBiometricAvailable = false;
+      notifyListeners();
     }
   }
 
@@ -44,12 +57,22 @@ class AuthService extends ChangeNotifier {
         throw Exception('Biometria não disponível neste dispositivo');
       }
 
+      // Verifica se há biometria disponível e configurada
+      final bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      final bool isDeviceSupported = await _localAuth.isDeviceSupported();
+      
+      if (!canCheckBiometrics || !isDeviceSupported) {
+        print('Dispositivo não suporta biometria ou não está configurada');
+        return false;
+      }
+
       // Solicita a autenticação biométrica
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: 'Por favor, autentique-se para acessar o aplicativo',
         options: const AuthenticationOptions(
-          biometricOnly: true, // Apenas biometria, sem PIN/senha do sistema
+          biometricOnly: false, // Permite fallback para PIN do sistema se necessário
           stickyAuth: true, // Mantém a autenticação ativa
+          useErrorDialogs: true, // Mostra diálogos de erro do sistema
         ),
       );
 
@@ -62,7 +85,15 @@ class AuthService extends ChangeNotifier {
       
       return false;
     } on PlatformException catch (e) {
-      print('Erro na autenticação biométrica: $e');
+      print('Erro na autenticação biométrica: ${e.code} - ${e.message}');
+      // Erros comuns:
+      // - NotAvailable: biometria não disponível
+      // - NotEnrolled: sem biometria cadastrada
+      // - LockedOut: muitas tentativas falhadas
+      // - PermanentlyLockedOut: bloqueado permanentemente
+      return false;
+    } catch (e) {
+      print('Erro inesperado na autenticação biométrica: $e');
       return false;
     }
   }
